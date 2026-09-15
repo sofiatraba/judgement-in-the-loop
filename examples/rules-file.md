@@ -34,9 +34,9 @@ Take-home test for a Product Engineer role.
 14. One feature per branch (`feat/…`, `chore/…`, `docs/…`). Conventional commits. Merge to `main` with `--no-ff`. Tests green before merging. Never commit directly to `main`.
 ```
 
-What to notice:
+A few notes on it:
 
 - Rules 1 and 2 are about scope. They stopped the agent from "improving" the contract.
-- Rule 6 did not exist on day one. An adversarial review found a deadlock; the fix became a rule so it could not come back.
-- Rules 7 and 9 are testable. A rule the build cannot check is a wish.
-- Rule 14 is the workflow. It gave the reviewers a history of small merges instead of one large commit.
+- Rule 6 didn't exist on day one. An adversarial review found a deadlock, and the fix became a rule so it couldn't come back.
+- Rules 7 and 9 can be checked by the build. I try to write rules that way, because a rule nobody can check tends to drift.
+- Rule 14 is the workflow. It gave the reviewers a history of small merges rather than one large commit.
