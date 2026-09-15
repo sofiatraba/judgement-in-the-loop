@@ -1,0 +1,287 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Judgement in the Loop",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "decide",
+        "label": "Decide before building",
+        "focus": [
+          "questions",
+          "research",
+          "structure",
+          "plan",
+          "decisions"
+        ],
+        "note": "The agent drafts, I answer and validate. Nothing is built before Structure and Plan are approved."
+      },
+      {
+        "id": "build",
+        "label": "Build inside the rules",
+        "focus": [
+          "rules",
+          "implement"
+        ],
+        "note": "The agent implements autonomously, reading the rules file every session."
+      },
+      {
+        "id": "attack",
+        "label": "Attack before merge",
+        "focus": [
+          "implement",
+          "attack",
+          "merge"
+        ],
+        "note": "Adversarial agents with a target. Findings go back; green plus evidence goes to main."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "My decision"
+        },
+        "backend": {
+          "label": "Agent work"
+        },
+        "security": {
+          "label": "Gate"
+        },
+        "database": {
+          "label": "Written record"
+        },
+        "cloud": {
+          "label": "Ship"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "loop",
+      "label": "The loop: I decide, the agent builds"
+    },
+    {
+      "id": "adversary",
+      "label": "Adversarial agents",
+      "variant": "exception"
+    },
+    {
+      "id": "record",
+      "label": "Written record"
+    }
+  ],
+  "phases": [
+    {
+      "id": "decide",
+      "label": "Decide",
+      "fromCol": 0,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "build",
+      "label": "Build",
+      "fromCol": 4,
+      "toCol": 4
+    },
+    {
+      "id": "attack-phase",
+      "label": "Attack, then ship",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "security"
+    }
+  ],
+  "groups": [
+    {
+      "id": "small-tier",
+      "label": "Small and reversible: Research, then Implement, report after",
+      "lane": "loop",
+      "fromCol": 1,
+      "toCol": 4,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "questions",
+    "research",
+    "structure",
+    "plan",
+    "implement",
+    "attack",
+    "merge"
+  ],
+  "nodes": [
+    {
+      "id": "questions",
+      "lane": "loop",
+      "col": 0,
+      "type": "frontend",
+      "label": "Questions",
+      "sublabel": "agent drafts, I answer",
+      "tag": "scope, stack, data",
+      "width": 136
+    },
+    {
+      "id": "structure",
+      "lane": "loop",
+      "col": 2,
+      "type": "security",
+      "label": "Structure",
+      "sublabel": "I validate the shape",
+      "tag": "the gate",
+      "width": 136
+    },
+    {
+      "id": "plan",
+      "lane": "loop",
+      "col": 3,
+      "type": "frontend",
+      "label": "Plan",
+      "sublabel": "I approve or redirect",
+      "width": 136
+    },
+    {
+      "id": "research",
+      "lane": "loop",
+      "col": 1,
+      "type": "backend",
+      "label": "Research",
+      "sublabel": "code, docs, contracts",
+      "width": 136
+    },
+    {
+      "id": "implement",
+      "lane": "loop",
+      "col": 4,
+      "type": "backend",
+      "label": "Implement",
+      "sublabel": "one branch, tests green",
+      "width": 136
+    },
+    {
+      "id": "attack",
+      "lane": "adversary",
+      "col": 5,
+      "type": "security",
+      "label": "Attack",
+      "sublabel": "find races, grade, edit",
+      "tag": "before merge",
+      "width": 136
+    },
+    {
+      "id": "decisions",
+      "lane": "record",
+      "col": 2,
+      "type": "database",
+      "label": "Decisions",
+      "sublabel": "docs/decisions.md",
+      "width": 136
+    },
+    {
+      "id": "rules",
+      "lane": "record",
+      "col": 4,
+      "type": "database",
+      "label": "Rules file",
+      "sublabel": "CLAUDE.md, every session",
+      "width": 136
+    },
+    {
+      "id": "merge",
+      "lane": "loop",
+      "col": 5,
+      "type": "cloud",
+      "label": "Merge",
+      "sublabel": "evidence attached",
+      "width": 136
+    }
+  ],
+  "edges": [
+    {
+      "id": "q-to-r",
+      "from": "questions",
+      "to": "research",
+      "label": "answers",
+      "variant": "default"
+    },
+    {
+      "id": "r-to-s",
+      "from": "research",
+      "to": "structure",
+      "label": "facts only",
+      "variant": "default"
+    },
+    {
+      "id": "s-to-p",
+      "from": "structure",
+      "to": "plan",
+      "variant": "emphasis"
+    },
+    {
+      "id": "s-to-d",
+      "from": "structure",
+      "to": "decisions",
+      "label": "written down",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "p-to-i",
+      "from": "plan",
+      "to": "implement",
+      "label": "approved",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rules-to-i",
+      "from": "rules",
+      "to": "implement",
+      "label": "non-negotiables",
+      "variant": "dashed"
+    },
+    {
+      "id": "i-to-a",
+      "from": "implement",
+      "to": "attack",
+      "variant": "security"
+    },
+    {
+      "id": "a-to-i",
+      "from": "attack",
+      "to": "implement",
+      "label": "findings",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "a-to-m",
+      "from": "attack",
+      "to": "merge",
+      "label": "green + evidence",
+      "variant": "emphasis",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What the agent never decides",
+      "items": [
+        "Scope, contract, data model, architecture",
+        "Anything I cannot undo: money, deletion, shared branches"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Tier by blast radius, never by diff size",
+      "items": [
+        "One line in a migration takes the full loop",
+        "Twenty lines in a test run Research then Implement"
+      ]
+    }
+  ]
+}
