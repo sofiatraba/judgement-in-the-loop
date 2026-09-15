@@ -1,73 +1,78 @@
 # Judgement in the Loop
 
-How I build software with an AI coding agent while keeping the decisions.
-
-The base is [QRSPI](https://github.com/matanshavit/qrspi) by Matan Shavit: Questions, Research, Structure, Plan, Implement. QRSPI grew out of Dex Horthy's Research, Plan, Implement. I didn't invent the phases. I added four things around them: a rules file the agent reads every session, a checkpoint I don't skip, adversarial agents before every merge, and a rule for when the full loop applies.
+A way of working with an AI coding agent where the agent does the work and I keep the decisions.
 
 ![Judgement in the Loop](docs/judgement-in-the-loop.png)
 
-Interactive version: [docs/judgement-in-the-loop.html](docs/judgement-in-the-loop.html). Open the file in a browser. Made with [archify](https://github.com/tt-a1i/archify); the source is in [docs/judgement-in-the-loop.json](docs/judgement-in-the-loop.json).
+Interactive version: [docs/judgement-in-the-loop.html](docs/judgement-in-the-loop.html), open it in a browser. Made with [archify](https://github.com/tt-a1i/archify); the source is in [docs/judgement-in-the-loop.json](docs/judgement-in-the-loop.json).
 
-## How it started
+## Where the phases come from
 
-July 2026. I was building a meal-planning app that talks to a real grocery basket, partly because I wanted it and partly to learn how a product manager should build with an agent. I asked the agent to design and implement the database schema, and it did both in one go. The schema was fine.
+Dex Horthy's Research, Plan, Implement split agent work into three prompts so you could read the plan before the code existed. Matan Shavit's [QRSPI](https://github.com/matanshavit/qrspi) added two phases: Questions in front, because the agent should surface the open decisions before it reads anything, and Structure between Research and Plan, because by the time a long plan lands the agent has already made every design decision inside it.
 
-A few weeks later I asked for an MCP layer so the agent could act on the app more autonomously, and I realised I couldn't edit a list item in the app I'd already had it build. I had let implementation run ahead of structure several times without noticing. The schema being fine had been luck. I'd never looked at the data model before it existed.
+I use QRSPI's five phases as they are. What follows is what I built around them, and why.
 
-The agent's code was good. The problem was that I'd stopped noticing where the decisions were being made.
+## Why I needed more than the phases
 
-## What I believe
+I let an agent design and implement a database schema in one go. It came out fine. Weeks later I couldn't edit a list item in the app it had built, and I realised I'd never looked at the data model before it existed. The code was good. The problem was that I'd stopped noticing where the decisions were being made, and a phase list on its own doesn't stop that. You can run all five phases and still nod through Structure because the draft looks right.
 
-AI should remove friction. Reading library source, migration guides and existing code before touching anything is friction, and I don't need to be in the loop for it. Deciding the shape of a data model, the trade-off in an algorithm, or what a feature should do is judgement, and judgement is the part of my job that doesn't transfer to the agent, however good its output looks.
+So the additions are all about one thing: making sure the decisions that are mine actually pass through me, and that the ones that aren't don't waste my attention.
 
-## The loop
+## What I changed
 
-| Phase | Who owns it | Why |
-|---|---|---|
-| **Questions** | Agent drafts, I answer | If a question can be answered by reading more code, it's research with the wrong label. Real questions are mine: the stack, the scope, the design direction. |
-| **Research** | Agent, on its own | Breadth reading is where the agent is faster than my oversight would be useful. It reports facts and keeps its implementation opinions for later. |
-| **Structure** | Agent drafts, I validate before it continues | This is the gate that was missing in July. Architecture and behaviour are mine to own, even when the draft is probably right. |
-| **Plan** | Agent writes, I approve or redirect | A written plan is cheap to correct. A component tree isn't. |
-| **Implement** | Agent, on its own, inside the rules file | Tests, the build and a real check that it works happen inside this step. |
-| **Attack** | Adversarial agents with a target | Each one gets a job: find races, grade the result against the brief, edit the docs for plain language. Findings go back to Implement. Green with evidence goes to main. |
+### 1. The agent doesn't decide what counts as a decision
 
-There are two tiers. A small, reversible change (a bug fix, a one-line correction, anything cheap to notice and cheap to undo) runs Research and Implement on its own and reports afterwards. Anything that touches a data model, a contract, an architecture or a real feature goes through the whole loop. I choose the tier by how reversible the change is and how far the damage would reach. The size of the diff doesn't come into it: one line in a migration takes the full loop, and twenty lines in a test don't.
+In Questions, the agent drafts and I answer. My test for a real question: if it can be answered by reading more code or documentation, it's research wearing the wrong label and goes back to the agent. What's left is genuinely mine, and it's always a small list: the stack, the scope, the design direction, what the feature is for.
 
-Some things override both tiers every time: real money or orders, deleting real data, pushing to anything shared, credentials, and anything I can't undo.
+Reasoning: an agent will happily ask me twenty questions, most of which it could answer itself, and I'll answer them because they're there. The filter keeps my attention on the few that matter.
 
-## What a take-home test added
+### 2. Structure is a stop, and I don't waive it
 
-September 2026, a take-home for a Product Engineer role at a large retailer: a supplier lifecycle API from an OpenAPI contract, a dashboard, one-command boot, five days. It was the first time I ran the loop end to end under time pressure. Three things became rules.
+The agent drafts the structure (the data model, the boundaries, the behaviour) and doesn't continue until I've validated it. I hold this even when the draft is probably right, and especially when the change seems small.
 
-**The rules file.** Before any code I wrote fourteen rules in a `CLAUDE.md` that the agent reads at the start of every session. The contract is read-only. Deliver the brief before any extra. Docker only. The domain imports no framework. Locks are always taken in the same order. Every business rule maps to a test named after it. Errors have one shape. One feature per branch, nothing straight to main. I never had to repeat any of them, and when the agent wanted to do something outside them it said so and asked. The file shipped with the delivery so the reviewers could see the contract I had with the agent. A lightly anonymised copy is in [examples/rules-file.md](examples/rules-file.md).
+Reasoning: this is the phase that failed in the schema story. A review I can skip when I'm busy is a review I will skip when I'm busy. Making it a stop with no exceptions is cheaper than deciding each time whether this one needs it.
 
-**Attack before merge.** Once the required scope was done I gave separate agents adversarial prompts. One looked for race conditions. One graded the work against the brief using the recruiter's own tips. One reviewed it as a tech lead who wanted to say no. One edited the docs for plain language. The races prompt found two real bugs I'd read past: applying and refusing on the same candidate at the same time could leave a refused candidacy next to a live supplier, and accepting and banning in the same country could deadlock. Both became locks taken in a fixed order, with tests that race the requests. The tech-lead prompt produced three push-backs I then prepared answers for. I wouldn't have found any of it by reading my own code again.
+### 3. A rules file instead of repeating myself
 
-**Verified means verified.** The agent rounds up. It says "done" when something is verified up to a point. Once a merge went through with a failing test because a grep had hidden the exit code, so now the exit code is checked explicitly before every merge. After I'd submitted, an emulated Intel boot failed with an error that looked like a missing platform in a Docker image. The real cause was a cached image on my laptop. I want evidence before I say "done", and evidence before I say "broken".
+Before any code I write the non-negotiables into a file the agent reads at the start of every session. On a recent five-day project it had fourteen lines: the API contract is read-only, deliver the brief before any extra, the domain imports no framework, locks are always taken in the same order, every business rule maps to a test named after it, errors have one shape, one feature per branch, nothing straight to main.
 
-I also turned things down. The agent could have faked "filter the whole ranking" by fetching many pages behind the user's back; the contract capped pages at ten, so the UI says "this page" and the real fix went into the backlog as a contract change. The first extra page had explanatory copy that read like a model wrote it, so I cut it. Facts about the test mock were about to appear in product UI, and they went to the docs instead.
+Reasoning: rules in a file are cheaper than rules in my head, and the agent reads a file more reliably than it remembers a conversation. When it wants to do something outside the rules it says so and asks, which is the behaviour I want. I write the rules so the build can check as many of them as possible, because a rule nobody checks drifts. When a review finds a bug, the fix often becomes a new rule so it can't come back.
 
-## The same idea in smaller projects
+### 4. Attack before merge
 
-**A training-load tool** over my Strava history. The script decides every threshold, zone and recommendation, and the model only phrases the weekly report from the evidence the script prints. If a report is ever wrong, the fix goes in the script or in the prompt file.
+After Implement, separate agents get adversarial prompts with a narrow target: find race conditions, grade the work against the brief, review it as a tech lead who wants to say no, edit the docs for plain language. Findings go back to Implement as their own branches. Only green with evidence goes to main.
 
-**The meal-planning app.** The model picks the week's meals. A validator rejects any recipe id the model invents, and a test feeds it a made-up id to prove that. "Propose" returns a draft and writes nothing; "apply" is a separate call. I built the version without that step first, because it demos better, and only noticed when I tried to trust it.
+Reasoning: I can't review my own blind spots, and a general "review this" prompt produces general remarks. A hostile prompt with one target produces specific findings. On that same five-day project the races prompt found two real concurrency bugs I'd read past, and the tech-lead prompt produced three push-backs worth preparing answers for. None of that would have come from me reading the code again.
 
-## What I refuse to do
+### 5. The tier is chosen by blast radius
 
-- Let an agent make an architecture or data-model call unreviewed because the output looked plausible.
-- Skip the Structure checkpoint because the change seems small.
-- Treat "the agent already built it" as evidence that it's right.
-- Turn this into ceremony. The small tier exists so a typo fix doesn't go through six phases.
-- Merge on "done" without the evidence attached.
+Two tiers. A small, reversible change (a bug fix, a one-line correction, anything cheap to notice and cheap to undo) runs Research and Implement on its own and reports afterwards. Anything that touches a data model, a contract, an architecture or a real feature goes through the whole loop.
 
-## Still testing
+Reasoning: diff size is a poor guide to risk. One line in a migration takes the full loop; twenty lines in a test don't. What I ask is how reversible the change is and how far the damage would reach. Some things override both tiers every time: real money or orders, deleting real data, pushing to anything shared, credentials, anything I can't undo.
 
-- Does the loop hold in a team? Whose Structure sign-off counts when three humans share one agent and one rules file?
-- Does Attack pay for itself on small changes, or only on features? On the take-home it cost about an hour per round and found bugs each time. I don't know where the floor is.
-- Should the Structure gate loosen as trust builds with one codebase, and what evidence would justify that?
+### 6. Done means evidence
+
+An agent rounds up. It says "done" when something is verified up to a point, and it diagnoses errors with the same confidence whether it's right or wrong. So a merge carries its evidence: the test run, the fresh boot, the check that the thing works. Once a merge went through with a failing test because a grep had hidden the exit code; now the exit code is checked explicitly. Once an agent told me an image didn't exist for a platform, and the real cause was a cache on my laptop.
+
+Reasoning: I want evidence before I say "done", and evidence before I say "broken". The agent's report is one input to that.
+
+## A change, start to finish
+
+Say the change is a new endpoint with a state rule behind it. The agent drafts questions; I answer the two that are mine (what the endpoint is for, whether the rule applies to existing records) and send the rest back as research. The agent reads the contract, the existing model and the tests, and reports facts. It drafts the structure: where the rule lives, what changes in the data model, what the error looks like. I validate it, and one of my decisions goes into the decisions log. The agent writes a plan; I approve it. It implements on a branch, inside the rules file, with the tests green. Two adversarial agents attack the branch: one for races, one for contract drift. One finding comes back, gets fixed on the same branch, and the branch merges with the evidence attached.
+
+The same shape shows up in the products I build with models inside them: the model proposes, code decides, and a validator sits between them.
+
+## What it's for
+
+Solo work and small teams where an agent does most of the typing. It's built to keep judgement where it belongs while giving the agent everything else. It isn't ceremony: the small tier exists so a typo fix doesn't go through six phases.
+
+## Open questions
+
+- Whose Structure sign-off counts when three humans share one agent and one rules file?
+- Does Attack pay for itself on small changes, or only on features? So far it's cost about an hour per round and found bugs each time. I don't know where the floor is.
+- Should the Structure stop loosen as trust builds with one codebase, and what evidence would justify that?
 - How much of this is specific to Claude Code, and how much survives a different agent?
 
 ## Credits and licence
 
-QRSPI is by [Matan Shavit](https://github.com/matanshavit/qrspi). The diagram was made with [archify](https://github.com/tt-a1i/archify) by tt-a1i. Text and diagram in this repository are by Sofia Traba and released under [CC BY 4.0](LICENSE).
+QRSPI is by [Matan Shavit](https://github.com/matanshavit/qrspi); Research, Plan, Implement is Dex Horthy's. The diagram was made with [archify](https://github.com/tt-a1i/archify) by tt-a1i. An example rules file is in [examples/rules-file.md](examples/rules-file.md). Text and diagram in this repository are by Sofia Traba and released under [CC BY 4.0](LICENSE).

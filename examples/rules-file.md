@@ -1,11 +1,11 @@
 # Example rules file
 
-The `CLAUDE.md` I used on a five-day take-home test (a supplier lifecycle API from an OpenAPI contract, a dashboard, one-command boot). Company name and repository paths are generalised; everything else is as the agent read it at the start of every session.
+The `CLAUDE.md` from a five-day project: a supplier lifecycle API built against a fixed OpenAPI contract, a dashboard, one-command boot. Names and paths are generalised; everything else is as the agent read it at the start of every session.
 
 ```markdown
 # Rules for this repository
 
-Take-home test for a Product Engineer role.
+Five-day project against a fixed API contract.
 
 ## Scope and contract
 
