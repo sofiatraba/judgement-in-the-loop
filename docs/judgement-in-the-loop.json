@@ -7,7 +7,7 @@
     "views": [
       {
         "id": "decide",
-        "label": "Decide before building",
+        "label": "I decide",
         "focus": [
           "questions",
           "research",
@@ -15,16 +15,16 @@
           "plan",
           "decisions"
         ],
-        "note": "The agent drafts, I answer and validate. Nothing is built before Structure and Plan are approved."
+        "note": "The agent drafts questions and structure; I answer and validate. Nothing is built before Structure and Plan are approved."
       },
       {
         "id": "build",
-        "label": "Build inside the rules",
+        "label": "Agent builds inside the rules",
         "focus": [
           "rules",
           "implement"
         ],
-        "note": "The agent implements autonomously, reading the rules file every session."
+        "note": "The agent implements on its own, reading the rules file every session."
       },
       {
         "id": "attack",
@@ -34,7 +34,7 @@
           "attack",
           "merge"
         ],
-        "note": "Adversarial agents with a target. Findings go back; green plus evidence goes to main."
+        "note": "Separate agents with one hostile target each. Findings go back; green with evidence merges."
       }
     ],
     "legend": {
@@ -61,35 +61,35 @@
   "lanes": [
     {
       "id": "loop",
-      "label": "The loop: I decide, the agent builds"
+      "label": "The loop"
     },
     {
       "id": "adversary",
-      "label": "Adversarial agents",
+      "label": "Separate agents with hostile prompts",
       "variant": "exception"
     },
     {
       "id": "record",
-      "label": "Written record"
+      "label": "What gets written down"
     }
   ],
   "phases": [
     {
       "id": "decide",
-      "label": "Decide",
+      "label": "I decide",
       "fromCol": 0,
       "toCol": 3,
       "variant": "emphasis"
     },
     {
       "id": "build",
-      "label": "Build",
+      "label": "Agent builds",
       "fromCol": 4,
       "toCol": 4
     },
     {
       "id": "attack-phase",
-      "label": "Attack, then ship",
+      "label": "Attack, then merge",
       "fromCol": 5,
       "toCol": 5,
       "variant": "security"
@@ -98,7 +98,7 @@
   "groups": [
     {
       "id": "small-tier",
-      "label": "Small and reversible: Research, then Implement, report after",
+      "label": "Small and reversible change: skip to Implement, report after",
       "lane": "loop",
       "fromCol": 1,
       "toCol": 4,
@@ -122,7 +122,7 @@
       "type": "frontend",
       "label": "Questions",
       "sublabel": "agent drafts, I answer",
-      "tag": "scope, stack, data",
+      "tag": "me",
       "width": 136
     },
     {
@@ -131,8 +131,8 @@
       "col": 2,
       "type": "security",
       "label": "Structure",
-      "sublabel": "I validate the shape",
-      "tag": "the gate",
+      "sublabel": "drafted, I say yes or no",
+      "tag": "stop",
       "width": 136
     },
     {
@@ -141,8 +141,9 @@
       "col": 3,
       "type": "frontend",
       "label": "Plan",
-      "sublabel": "I approve or redirect",
-      "width": 136
+      "sublabel": "written, I approve",
+      "width": 136,
+      "tag": "me"
     },
     {
       "id": "research",
@@ -150,8 +151,9 @@
       "col": 1,
       "type": "backend",
       "label": "Research",
-      "sublabel": "code, docs, contracts",
-      "width": 136
+      "sublabel": "reads, reports facts",
+      "width": 136,
+      "tag": "agent"
     },
     {
       "id": "implement",
@@ -159,8 +161,9 @@
       "col": 4,
       "type": "backend",
       "label": "Implement",
-      "sublabel": "one branch, tests green",
-      "width": 136
+      "sublabel": "on a branch, tests green",
+      "width": 136,
+      "tag": "agent"
     },
     {
       "id": "attack",
@@ -168,7 +171,7 @@
       "col": 5,
       "type": "security",
       "label": "Attack",
-      "sublabel": "find races, grade, edit",
+      "sublabel": "races, grading, a hard no",
       "tag": "before merge",
       "width": 136
     },
@@ -177,8 +180,8 @@
       "lane": "record",
       "col": 2,
       "type": "database",
-      "label": "Decisions",
-      "sublabel": "docs/decisions.md",
+      "label": "Decisions log",
+      "sublabel": "why it looks like this",
       "width": 136
     },
     {
@@ -187,7 +190,7 @@
       "col": 4,
       "type": "database",
       "label": "Rules file",
-      "sublabel": "CLAUDE.md, every session",
+      "sublabel": "read every session",
       "width": 136
     },
     {
@@ -197,7 +200,8 @@
       "type": "cloud",
       "label": "Merge",
       "sublabel": "evidence attached",
-      "width": 136
+      "width": 136,
+      "tag": "ship"
     }
   ],
   "edges": [
@@ -205,14 +209,14 @@
       "id": "q-to-r",
       "from": "questions",
       "to": "research",
-      "label": "answers",
+      "label": "my answers",
       "variant": "default"
     },
     {
       "id": "r-to-s",
       "from": "research",
       "to": "structure",
-      "label": "facts only",
+      "label": "facts",
       "variant": "default"
     },
     {
@@ -225,7 +229,7 @@
       "id": "s-to-d",
       "from": "structure",
       "to": "decisions",
-      "label": "written down",
+      "label": "decision + reason",
       "variant": "dashed",
       "role": "branch"
     },
@@ -240,7 +244,7 @@
       "id": "rules-to-i",
       "from": "rules",
       "to": "implement",
-      "label": "non-negotiables",
+      "label": "rules",
       "variant": "dashed"
     },
     {
@@ -272,15 +276,15 @@
       "title": "What the agent never decides",
       "items": [
         "Scope, contract, data model, architecture",
-        "Anything I cannot undo: money, deletion, shared branches"
+        "Anything I can't undo: money, deletion, shared branches"
       ]
     },
     {
       "dot": "rose",
-      "title": "Tier by blast radius, never by diff size",
+      "title": "Which tier? Blast radius, not diff size",
       "items": [
-        "One line in a migration takes the full loop",
-        "Twenty lines in a test run Research then Implement"
+        "One line in a migration takes the whole loop",
+        "Twenty lines in a test skip to Implement"
       ]
     }
   ]
